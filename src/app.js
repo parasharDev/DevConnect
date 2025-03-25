@@ -12,6 +12,3 @@ app.listen(3000,()=>{
 
 
 
-// (req,res)=>{
-//     res.send("Hello from the server")
-// } is called request handler
