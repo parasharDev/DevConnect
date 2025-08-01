@@ -56,20 +56,40 @@ app.delete("/user", async (req, res) => {
 });
 
 //6. Update User
-app.patch("/user", async (req, res) => {
-  const userId = req.body.userId;
-  const body = req.body;
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params?.userId;
+  const data = req.body;
+
   try {
-    const updatedUser = await User.findByIdAndUpdate({ _id: userId }, body, {
+    const ALLOWED_UPDATES = [
+      "photoUrl",
+      "about",
+      "gender",
+      "age",
+      "skills",
+    ];
+    // for items other than ALLOWED_UPDATES
+    // it should not be allowed to update
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATES.includes(k)
+    );
+    if (!isUpdateAllowed) {
+      throw new Error("Update not allowed"); //it will activate the catch
+    }
+    //restrict the number of skills
+    if(data?.skills?.length > 10){
+      throw new Error("Skills cannot be more than 10")
+    }
+    const updatedUser = await User.findByIdAndUpdate({ _id: userId }, data, {
       runValidators: true,
     }); // {userId} is also Ok //we can optional filed beforeUpdate and afterUpdate
     res.send("User updated successfully");
   } catch (err) {
-    res.status(400).send("Something went wrong");
+    res.status(400).send("Update Failed:" + err.message);
   }
 });
 
-//In the patch method, runValidators is used otherwise validation 
+//In the patch method, runValidators is used otherwise validation
 //like gender will run for new documents but nor for the existinf documents
 
 connectDB()
