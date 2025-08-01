@@ -55,18 +55,22 @@ app.delete("/user", async (req, res) => {
   }
 });
 
-
 //6. Update User
 app.patch("/user", async (req, res) => {
   const userId = req.body.userId;
   const body = req.body;
   try {
-    const updatedUser = await User.findByIdAndUpdate({ _id: userId }, body); // {userId} is also Ok //we can optional filed beforeUpdate and afterUpdate
+    const updatedUser = await User.findByIdAndUpdate({ _id: userId }, body, {
+      runValidators: true,
+    }); // {userId} is also Ok //we can optional filed beforeUpdate and afterUpdate
     res.send("User updated successfully");
   } catch (err) {
     res.status(400).send("Something went wrong");
   }
 });
+
+//In the patch method, runValidators is used otherwise validation 
+//like gender will run for new documents but nor for the existinf documents
 
 connectDB()
   .then(() => {
