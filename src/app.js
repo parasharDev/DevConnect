@@ -4,8 +4,11 @@ const app = express();
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 app.use(express.json()); //every route will go through this function because of use
+app.use(cookieParser());
 
 // 1.Signup
 app.post("/signup", async (req, res) => {
@@ -32,13 +35,19 @@ app.post("/signup", async (req, res) => {
 // 2.Login
 app.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { emailId, password } = req.body;
     const user = await User.findOne({ emailId: emailId });
     if (!user) {
       throw new Error("Invalid Credentials!");
     }
-    const isPasswordValid = await bycrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (isPasswordValid) {
+      //Create a JWT Token
+      const token = await jwt.sign({ _id: user.id }, "DEV@Tinder&790");
+      console.log(token);
+
+      //Add the token to cookie and send the response
+      res.cookie("token", token);
       res.send("Login Successful!");
     } else {
       throw new Error("Invalid Credentials!");
@@ -48,7 +57,27 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// 3.Feed API - GET /feed - get all the users from the db
+// 3.Profile
+app.get("/profile", async (req, res) => {
+  try {
+    const cookies = req.cookies;
+    const { token } = cookies;
+    if (!token) {
+      throw new Error("Invalid Token");
+    }
+    const decodedMessage = await jwt.verify(token, "DEV@Tinder&790");
+    const { _id } = decodedMessage;
+    const user = await User.findById(_id);
+    if (!user) {
+      throw new Error("User doesnot exist");
+    }
+    res.send(user);
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
+  }
+});
+
+// 4.Feed API - GET /feed - get all the users from the db
 app.get("/feed", async (req, res) => {
   try {
     const users = await User.find({});
