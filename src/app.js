@@ -1,11 +1,13 @@
 const express = require("express"); // calls the express file from node_modules
 const connectDB = require("./config/database");
 const app = express();
-const User = require("./models/user");
-const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+
+const { userAuth } = require("./middlewares/auth");
+const User = require("./models/user");
+const { validateSignUpData } = require("./utils/validation");
 
 app.use(express.json()); //every route will go through this function because of use
 app.use(cookieParser());
@@ -40,14 +42,14 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("Invalid Credentials!");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.validatePassword(password);
     if (isPasswordValid) {
       //Create a JWT Token
-      const token = await jwt.sign({ _id: user.id }, "DEV@Tinder&790");
-      console.log(token);
-
+      const token = await user.getJWT(); //user instance created from line 41
       //Add the token to cookie and send the response
-      res.cookie("token", token);
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 24 * 7 * 3600000),
+      }); //cookie will expire in 7 days
       res.send("Login Successful!");
     } else {
       throw new Error("Invalid Credentials!");
@@ -58,23 +60,21 @@ app.post("/login", async (req, res) => {
 });
 
 // 3.Profile
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const cookies = req.cookies;
-    const { token } = cookies;
-    if (!token) {
-      throw new Error("Invalid Token");
-    }
-    const decodedMessage = await jwt.verify(token, "DEV@Tinder&790");
-    const { _id } = decodedMessage;
-    const user = await User.findById(_id);
-    if (!user) {
-      throw new Error("User doesnot exist");
-    }
+    const user = req.user;
     res.send(user);
   } catch (err) {
     res.status(400).send("ERROR: " + err.message);
   }
+});
+
+//4. Send Connection Request
+
+app.post("/sendConnectionRequest", async (req, res, next) => {
+  try {
+    const user = req;
+  } catch (err) {}
 });
 
 // 4.Feed API - GET /feed - get all the users from the db
