@@ -1,81 +1,23 @@
 const express = require("express"); // calls the express file from node_modules
-const connectDB = require("./config/database");
 const app = express();
-const bcrypt = require("bcrypt");
-const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
 
-const { userAuth } = require("./middlewares/auth");
+const connectDB = require("./config/database");
+const cookieParser = require("cookie-parser");
+
 const User = require("./models/user");
-const { validateSignUpData } = require("./utils/validation");
+
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const requestRouter = require("./routes/request");
 
 app.use(express.json()); //every route will go through this function because of use
 app.use(cookieParser());
 
-// 1.Signup
-app.post("/signup", async (req, res) => {
-  try {
-    // Validation of data
-    validateSignUpData(req);
-    const { firstName, lastName, emailId, password } = req.body;
-    //Encrypt the password
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = new User({
-      firstName,
-      lastName,
-      emailId,
-      password: passwordHash,
-    }); //Creating a new instance of user model
+app.use("/",authRouter)
+app.use("/",profileRouter)
+app.use("/",requestRouter)
 
-    await user.save();
-    res.send("User added successfully");
-  } catch (err) {
-    res.status(400).send("Error:" + err.message);
-  }
-});
 
-// 2.Login
-app.post("/login", async (req, res) => {
-  try {
-    const { emailId, password } = req.body;
-    const user = await User.findOne({ emailId: emailId });
-    if (!user) {
-      throw new Error("Invalid Credentials!");
-    }
-    const isPasswordValid = await user.validatePassword(password);
-    if (isPasswordValid) {
-      //Create a JWT Token
-      const token = await user.getJWT(); //user instance created from line 41
-      //Add the token to cookie and send the response
-      res.cookie("token", token, {
-        expires: new Date(Date.now() + 24 * 7 * 3600000),
-      }); //cookie will expire in 7 days
-      res.send("Login Successful!");
-    } else {
-      throw new Error("Invalid Credentials!");
-    }
-  } catch (err) {
-    res.status(400).send("ERROR:" + err.message);
-  }
-});
-
-// 3.Profile
-app.get("/profile", userAuth, async (req, res) => {
-  try {
-    const user = req.user;
-    res.send(user);
-  } catch (err) {
-    res.status(400).send("ERROR: " + err.message);
-  }
-});
-
-//4. Send Connection Request
-
-app.post("/sendConnectionRequest", async (req, res, next) => {
-  try {
-    const user = req;
-  } catch (err) {}
-});
 
 // 4.Feed API - GET /feed - get all the users from the db
 app.get("/feed", async (req, res) => {
