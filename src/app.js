@@ -9,14 +9,15 @@ const User = require("./models/user");
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
+const userRouter = require("./routes/user")
 
 app.use(express.json()); //every route will go through this function because of use
 app.use(cookieParser());
 
-app.use("/",authRouter)
-app.use("/",profileRouter)
-app.use("/",requestRouter)
-
+app.use("/",authRouter);
+app.use("/",profileRouter);
+app.use("/",requestRouter);
+app.use("/",userRouter);
 
 
 // 4.Feed API - GET /feed - get all the users from the db
