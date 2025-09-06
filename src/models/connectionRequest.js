@@ -1,9 +1,18 @@
 const mongoose = require("mongoose");
+const User = require("../models/user");
 
 const connectionRequestSchema = new mongoose.Schema(
   {
-    fromUserId: { type: mongoose.Schema.Types.ObjectId, required: true },
-    toUserId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    fromUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User", // reference to the user collection
+    },
+    toUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
     status: {
       type: String,
       required: true,
@@ -18,9 +27,7 @@ const connectionRequestSchema = new mongoose.Schema(
 
 //Compound Index
 // A compound index { a: 1, b: 1 } can serve queries on:
-
 // a
-
 // a + b
 // but not on b alone.
 
