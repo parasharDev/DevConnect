@@ -30,6 +30,7 @@ router.post("/login", async (req, res) => {
     const { emailId, password } = req.body;
     const user = await User.findOne({ emailId: emailId });
     if (!user) {
+      console.log(1);
       throw new Error("Invalid Credentials!");
     }
     const isPasswordValid = await user.validatePassword(password);
@@ -40,8 +41,9 @@ router.post("/login", async (req, res) => {
       res.cookie("token", token, {
         expires: new Date(Date.now() + 24 * 7 * 3600000),
       }); //cookie will expire in 7 days
-      res.send("Login Successful!");
+      res.send(user);
     } else {
+      console.log(2);
       throw new Error("Invalid Credentials!");
     }
   } catch (err) {
